@@ -48,7 +48,7 @@ var (
 	logFormat string
 )
 
-var rootCmd = &cobra.Command{
+var rootCmd = &cobra.Command{ //rootCmd是一个*cobra.Command 类型的实例
 	Use:   "OpenGFW [flags] rule_file",
 	Short: appDesc,
 	Args:  cobra.ExactArgs(1),
@@ -111,7 +111,7 @@ func Execute() {
 	}
 }
 
-func init() {
+func init() { //init()函数在包首次加载时运行
 	initFlags()
 	cobra.OnInitialize(initConfig)
 	cobra.OnInitialize(initLogger) // initLogger must come after initConfig as it depends on config
@@ -122,6 +122,7 @@ func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&pcapFile, "pcap", "p", "", "pcap file (optional)")
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", envOrDefaultString(appLogLevelEnv, "info"), "log level")
 	rootCmd.PersistentFlags().StringVarP(&logFormat, "log-format", "f", envOrDefaultString(appLogFormatEnv, "console"), "log format")
+	//cobra.OnInitialize(initConfig)的作用是等待已经导入包了，并对命令行解析后再运行内部的函数
 }
 
 func initConfig() {
@@ -131,6 +132,7 @@ func initConfig() {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
 		viper.SupportedExts = append([]string{"yaml", "yml"}, viper.SupportedExts...)
+		//配置文件可能存在的位置
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("$HOME/.opengfw")
 		viper.AddConfigPath("/etc/opengfw")
@@ -213,6 +215,7 @@ func (c *cliConfig) fillIO(config *engine.Config) error {
 	var err error
 	if pcapFile != "" {
 		// Setup IO for pcap file replay
+		// 若重放的pcap包文件存在，则读取该
 		logger.Info("replaying from pcap file", zap.String("pcap file", pcapFile))
 		ioImpl, err = io.NewPcapPacketIO(io.PcapPacketIOConfig{
 			PcapFile: pcapFile,
@@ -253,10 +256,12 @@ func (c *cliConfig) fillWorkers(config *engine.Config) error {
 
 // Config validates the fields and returns a ready-to-use engine config.
 // This does not include the ruleset.
+// Config 验证字段并返回现成的引擎配置
+// 这不包括规则集。
 func (c *cliConfig) Config() (*engine.Config, error) {
-	engineConfig := &engine.Config{}
-	fillers := []func(*engine.Config) error{
-		c.fillLogger,
+	engineConfig := &engine.Config{}         // 新建一个空的Config对象
+	fillers := []func(*engine.Config) error{ // 函数切片
+		c.fillLogger, //读取c *cliConfig中的配置，复制到engineConfig中，以下相同
 		c.fillIO,
 		c.fillWorkers,
 	}
@@ -282,22 +287,23 @@ func runMain(cmd *cobra.Command, args []string) {
 		logger.Fatal("failed to parse config", zap.Error(err))
 	}
 	defer engineConfig.IO.Close() // Make sure to close IO on exit
+	// 由于前面fillIO开启了文件句柄，因此退出前需要确保句柄先关闭了
 
 	// Ruleset
-	rawRs, err := ruleset.ExprRulesFromYAML(args[0])
+	rawRs, err := ruleset.ExprRulesFromYAML(args[0]) //从命令行第一个参数确认规则集的位置，并读取
 	if err != nil {
 		logger.Fatal("failed to load rules", zap.Error(err))
 	}
-	rsConfig := &ruleset.BuiltinConfig{
+	rsConfig := &ruleset.BuiltinConfig{ //
 		Logger:               &rulesetLogger{},
 		GeoMatcher:           geo.NewGeoMatcher(config.Ruleset.GeoSite, config.Ruleset.GeoIp),
 		ProtectedDialContext: engineConfig.IO.ProtectedDialContext,
 	}
-	rs, err := ruleset.CompileExprRules(rawRs, analyzers, modifiers, rsConfig)
+	rs, err := ruleset.CompileExprRules(rawRs, analyzers, modifiers, rsConfig) // 将规则集编译为有限状态机
 	if err != nil {
 		logger.Fatal("failed to compile rules", zap.Error(err))
 	}
-	engineConfig.Ruleset = rs
+	engineConfig.Ruleset = rs //将解析的规则绑定到引擎配置上
 
 	// Engine
 	en, err := engine.NewEngine(*engineConfig)
@@ -316,7 +322,7 @@ func runMain(cmd *cobra.Command, args []string) {
 		cancelFunc()
 	}()
 	go func() {
-		// Rule reload
+		// Rule reload规则集热加载
 		reloadChan := make(chan os.Signal, 1)
 		signal.Notify(reloadChan, syscall.SIGHUP)
 		for {
