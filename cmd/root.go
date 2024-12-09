@@ -312,28 +312,29 @@ func runMain(cmd *cobra.Command, args []string) {
 	}
 
 	// Signal handling
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(context.Background()) //创建一个上下文管理Goroutine
+	// 执行cancelFunc()时，所有<-ctx.done()都能够接收到消息
 	go func() {
-		// Graceful shutdown
-		shutdownChan := make(chan os.Signal, 1)
-		signal.Notify(shutdownChan, os.Interrupt, syscall.SIGTERM)
-		<-shutdownChan
+		// Graceful shutdown优雅退出
+		shutdownChan := make(chan os.Signal, 1) //创建一个存储操作系统信号的Chan
+		signal.Notify(shutdownChan, os.Interrupt, syscall.SIGTERM) //将Ctrl+C的中断信号和kill的终止信号绑定到该chan上
+		<-shutdownChan //请求一个中断信号，从而将该goroutine阻塞掉，直到中断信号
 		logger.Info("shutting down gracefully...")
-		cancelFunc()
+		cancelFunc() //创建一个上下文管理Goroutine
 	}()
 	go func() {
 		// Rule reload规则集热加载
 		reloadChan := make(chan os.Signal, 1)
-		signal.Notify(reloadChan, syscall.SIGHUP)
+		signal.Notify(reloadChan, syscall.SIGHUP) //将挂起信号绑定到该chan上
 		for {
 			<-reloadChan
 			logger.Info("reloading rules")
-			rawRs, err := ruleset.ExprRulesFromYAML(args[0])
+			rawRs, err := ruleset.ExprRulesFromYAML(args[0]) //重新读取规则集并进行反序列化
 			if err != nil {
 				logger.Error("failed to load rules, using old rules", zap.Error(err))
 				continue
 			}
-			rs, err := ruleset.CompileExprRules(rawRs, analyzers, modifiers, rsConfig)
+			rs, err := ruleset.CompileExprRules(rawRs, analyzers, modifiers, rsConfig)//将规则集编译为高性能状态机
 			if err != nil {
 				logger.Error("failed to compile rules, using old rules", zap.Error(err))
 				continue

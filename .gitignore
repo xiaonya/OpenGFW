@@ -208,3 +208,5 @@ $RECYCLE.BIN/
 
 # Internal tools not ready for public use yet
 tools/flowseq/
+
+OpenGFW*
