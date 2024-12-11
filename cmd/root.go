@@ -259,7 +259,7 @@ func (c *cliConfig) fillWorkers(config *engine.Config) error {
 // Config 验证字段并返回现成的引擎配置
 // 这不包括规则集。
 func (c *cliConfig) Config() (*engine.Config, error) {
-	engineConfig := &engine.Config{}         // 新建一个空的Config对象
+	engineConfig := &engine.Config{}         // 新建一个engine文件夹下空的Config对象
 	fillers := []func(*engine.Config) error{ // 函数切片
 		c.fillLogger, //读取c *cliConfig中的配置，复制到engineConfig中，以下相同
 		c.fillIO,
@@ -316,9 +316,9 @@ func runMain(cmd *cobra.Command, args []string) {
 	// 执行cancelFunc()时，所有<-ctx.done()都能够接收到消息
 	go func() {
 		// Graceful shutdown优雅退出
-		shutdownChan := make(chan os.Signal, 1) //创建一个存储操作系统信号的Chan
+		shutdownChan := make(chan os.Signal, 1)                    //创建一个存储操作系统信号的Chan
 		signal.Notify(shutdownChan, os.Interrupt, syscall.SIGTERM) //将Ctrl+C的中断信号和kill的终止信号绑定到该chan上
-		<-shutdownChan //请求一个中断信号，从而将该goroutine阻塞掉，直到中断信号
+		<-shutdownChan                                             //请求一个中断信号，从而将该goroutine阻塞掉，直到中断信号
 		logger.Info("shutting down gracefully...")
 		cancelFunc() //创建一个上下文管理Goroutine
 	}()
@@ -334,7 +334,7 @@ func runMain(cmd *cobra.Command, args []string) {
 				logger.Error("failed to load rules, using old rules", zap.Error(err))
 				continue
 			}
-			rs, err := ruleset.CompileExprRules(rawRs, analyzers, modifiers, rsConfig)//将规则集编译为高性能状态机
+			rs, err := ruleset.CompileExprRules(rawRs, analyzers, modifiers, rsConfig) //将规则集编译为高性能状态机
 			if err != nil {
 				logger.Error("failed to compile rules, using old rules", zap.Error(err))
 				continue

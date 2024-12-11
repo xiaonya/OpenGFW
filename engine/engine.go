@@ -59,6 +59,7 @@ func (e *engine) UpdateRuleset(r ruleset.Ruleset) error {
 
 func (e *engine) Run(ctx context.Context) error {
 	workerCtx, workerCancel := context.WithCancel(ctx)
+	//用根上下文创建子上下文，可以让子上下文继承父上下文的状态，也可以子上下文可以独立取消
 	defer workerCancel() // Stop workers
 
 	// Register IO shutdown
