@@ -119,7 +119,7 @@ func (w *worker) Feed(p *workerPacket) {
 }
 
 func (w *worker) Run(ctx context.Context) {
-	w.logger.WorkerStart(w.id)
+	w.logger.WorkerStart(w.id) //logger 记录worker启动
 	defer w.logger.WorkerStop(w.id)
 
 	tcpFlushTicker := time.NewTicker(tcpFlushInterval)

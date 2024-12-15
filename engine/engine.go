@@ -63,13 +63,14 @@ func (e *engine) Run(ctx context.Context) error {
 	defer workerCancel() // Stop workers
 
 	// Register IO shutdown
-	ioCtx, ioCancel := context.WithCancel(ctx)
-	e.io.SetCancelFunc(ioCancel)
+	ioCtx, ioCancel := context.WithCancel(ctx) //用根上下文创建管理IO的子上下文
+	e.io.SetCancelFunc(ioCancel) //将ioCancel函数传递给PacketIO接口
 	defer ioCancel() // Stop IO
 
 	// Start workers
+	// 逐个启动Worker
 	for _, w := range e.workers {
-		go w.Run(workerCtx)
+		go w.Run(workerCtx) 
 	}
 
 	// Register IO callback
