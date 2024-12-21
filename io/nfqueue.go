@@ -145,6 +145,7 @@ func NewNFQueuePacketIO(config NFQueuePacketIOConfig) (PacketIO, error) {
 	}
 	if config.ConnMarkAccept == config.ConnMarkDrop {
 		return nil, errors.New("connMarkAccept and connMarkDrop cannot be the same")
+		// 两种网络流不能打上同一个标签
 	}
 	var ipt4, ipt6 *iptables.IPTables
 	var err error

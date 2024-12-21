@@ -210,12 +210,12 @@ func (c *cliConfig) fillLogger(config *engine.Config) error {
 	return nil
 }
 
-func (c *cliConfig) fillIO(config *engine.Config) error {
+func (c *cliConfig) fillIO(config *engine.Config) error { // 在该函数中实例化出IO
 	var ioImpl io.PacketIO
 	var err error
 	if pcapFile != "" {
 		// Setup IO for pcap file replay
-		// 若重放的pcap包文件存在，则读取该
+		// 若重放的pcap包文件存在，则读取并重放
 		logger.Info("replaying from pcap file", zap.String("pcap file", pcapFile))
 		ioImpl, err = io.NewPcapPacketIO(io.PcapPacketIOConfig{
 			PcapFile: pcapFile,
@@ -225,15 +225,15 @@ func (c *cliConfig) fillIO(config *engine.Config) error {
 		// Setup IO for nfqueue
 		ioImpl, err = io.NewNFQueuePacketIO(io.NFQueuePacketIOConfig{
 			QueueSize:      c.IO.QueueSize,
-			QueueNum:       c.IO.QueueNum,
-			Table:          c.IO.Table,
-			ConnMarkAccept: c.IO.ConnMarkAccept,
-			ConnMarkDrop:   c.IO.ConnMarkDrop,
+			QueueNum:       c.IO.QueueNum,       // nfqueue 队列序号
+			Table:          c.IO.Table,          // nftables 表名
+			ConnMarkAccept: c.IO.ConnMarkAccept, // 放行连接的 connmark 值
+			ConnMarkDrop:   c.IO.ConnMarkDrop,   // 阻断连接的 connmark 值
 
 			ReadBuffer:  c.IO.ReadBuffer,
 			WriteBuffer: c.IO.WriteBuffer,
-			Local:       c.IO.Local,
-			RST:         c.IO.RST,
+			Local:       c.IO.Local, // 如果想在 FORWARD 链上运行（如在路由器上），设置为 false
+			RST:         c.IO.RST,   // 如果想为被阻断的 TCP 连接发送 RST，设置为 true。仅在 local=false 时有效
 		})
 	}
 

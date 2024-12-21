@@ -15,7 +15,7 @@ var _ Engine = (*engine)(nil)
 
 type engine struct {
 	logger  Logger
-	io      io.PacketIO
+	io      io.PacketIO // 流量捕获的核心接口
 	workers []*worker
 }
 
@@ -64,16 +64,16 @@ func (e *engine) Run(ctx context.Context) error {
 
 	// Register IO shutdown
 	ioCtx, ioCancel := context.WithCancel(ctx) //用根上下文创建管理IO的子上下文
-	e.io.SetCancelFunc(ioCancel) //将ioCancel函数传递给PacketIO接口
-	defer ioCancel() // Stop IO
+	e.io.SetCancelFunc(ioCancel)               //将ioCancel函数传递给PacketIO接口
+	defer ioCancel()                           // Stop IO
 
 	// Start workers
-	// 逐个启动Worker
 	for _, w := range e.workers {
-		go w.Run(workerCtx) 
+		go w.Run(workerCtx) // 逐个启动Worker
 	}
 
 	// Register IO callback
+	// 注册IO回调函数，每当捕获到流量包时调用
 	errChan := make(chan error, 1)
 	err := e.io.Register(ioCtx, func(p io.Packet, err error) bool {
 		if err != nil {
@@ -98,6 +98,7 @@ func (e *engine) Run(ctx context.Context) error {
 }
 
 // dispatch dispatches a packet to a worker.
+// 调度一个数据包给worker进程
 func (e *engine) dispatch(p io.Packet) bool {
 	data := p.Data()
 	ipVersion := data[0] >> 4
