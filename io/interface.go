@@ -62,6 +62,7 @@ type PacketIO interface {
 	Close() error
 	// SetCancelFunc gives packet IO access to context cancel function, enabling it to
 	// trigger a shutdown
+	// SetCancelFunc 使数据包 IO 能够访问上下文的取消函数，从而触发关闭操作
 	SetCancelFunc(cancelFunc context.CancelFunc) error
 }
 
