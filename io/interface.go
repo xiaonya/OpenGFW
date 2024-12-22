@@ -39,6 +39,8 @@ type Packet interface {
 
 // PacketCallback is called for each packet received.
 // Return false to "unregister" and stop receiving packets.
+// PacketCallback 在每个接收到的数据包时被调用。
+// 返回 false 以“取消注册”并停止接收数据包。
 type PacketCallback func(Packet, error) bool
 
 type PacketIO interface {
