@@ -223,6 +223,7 @@ func (c *cliConfig) fillIO(config *engine.Config) error { // 在该函数中实�
 		})
 	} else {
 		// Setup IO for nfqueue
+		// 使用 Linux 内核的 Netfilter Queue (NFQueue) 机制来捕获和处理网络数据包。
 		ioImpl, err = io.NewNFQueuePacketIO(io.NFQueuePacketIOConfig{
 			QueueSize:      c.IO.QueueSize,
 			QueueNum:       c.IO.QueueNum,       // nfqueue 队列序号

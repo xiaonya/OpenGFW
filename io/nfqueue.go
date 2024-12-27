@@ -151,6 +151,7 @@ func NewNFQueuePacketIO(config NFQueuePacketIOConfig) (PacketIO, error) {
 	var err error
 	if nftCheck() != nil {
 		// We prefer nftables, but if it's not available, fall back to iptables
+		// 我们更倾向于使用nftables，但如果不可用，则回退到iptables
 		ipt4, err = iptables.NewWithProtocol(iptables.ProtocolIPv4)
 		if err != nil {
 			return nil, err
